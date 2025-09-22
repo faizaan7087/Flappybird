@@ -14,7 +14,7 @@ const BIRD_WIDTH = 34;
 const BIRD_HEIGHT = 24;
 const PIPE_WIDTH = 52;
 const GRAVITY = 1200; // Was 0.4, now pixels per second squared
-const LIFT = -450;    // Was -7, now pixels per second
+const LIFT = -400;    // Was -7, now pixels per second
 const PIPE_GAP = 150;
 const PIPE_SPEED = 180; // Was 2, now pixels per second
 
