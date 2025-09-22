@@ -13,10 +13,12 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const BIRD_WIDTH = 34;
 const BIRD_HEIGHT = 24;
 const PIPE_WIDTH = 52;
-const GRAVITY = 0.4;
-const LIFT = -7;
-const PIPE_GAP = 120;
-const PIPE_SPEED = 2;
+const GRAVITY = 1200; // Was 0.4, now pixels per second squared
+const LIFT = -450;    // Was -7, now pixels per second
+const PIPE_GAP = 150;
+const PIPE_SPEED = 180; // Was 2, now pixels per second
+
+
 
 let bird = {
     x: 50,
@@ -31,6 +33,8 @@ let score = 0;
 let frameCount = 0;
 let gameOver = false;
 let gameStarted = false;
+let lastTime = 0
+let timeToNextPipe = 0;
 
 // --- Image Loading ---
 const birdImg = new Image();
@@ -45,62 +49,88 @@ bottomPipeImg.src = 'images/pipeup.png';
 
 
 // --- Game Functions ---
+
 // Main game loop
-function gameLoop() {
+// NEW gameLoop function
+function gameLoop(currentTime) {
     if (gameOver) {
         displayGameOver();
         return;
     }
 
-    update();
+    // Calculate delta time
+    if (lastTime === 0) {
+        lastTime = currentTime;
+    }
+    const deltaTime = (currentTime - lastTime) / 1000; // Time in seconds
+    lastTime = currentTime;
+
+    update(deltaTime); // Pass deltaTime to the update function
     draw();
     requestAnimationFrame(gameLoop);
 }
 
 // Updates game state
-function update() {
+// Reworked update function
+function update(deltaTime) {
     // Bird movement
-    bird.velocity += GRAVITY;
-    bird.y += bird.velocity;
+    bird.velocity += GRAVITY * deltaTime;
+    bird.y += bird.velocity * deltaTime;
 
-    // Pipe generation
+    // (The rest of the update function logic for pipes remains the same)
     frameCount++;
-    if (frameCount % 90 === 0) { // Add a new pipe every 1.5 seconds (90 frames)
-        const topPipeHeight = Math.floor(Math.random() * (canvas.height - PIPE_GAP - 100)) + 50;
-        pipes.push({
+    // Inside the update(deltaTime) function...
+    timeToNextPipe -= deltaTime; // Subtract the time since last frame
+
+    if (timeToNextPipe <= 0) {
+        // Reset the timer for the next pipe
+        const pipeInterval = 1.5; // Seconds between pipes. Adjust for difficulty!
+        timeToNextPipe = pipeInterval;
+
+        // The rest of your pipe creation logic goes here
+        const minHeight = 60;
+        const availableSpace = canvas.height - PIPE_GAP - (minHeight * 2);
+        const topPipeHeight = Math.floor(Math.random() * availableSpace) + minHeight;
+        const bottomPipeY = topPipeHeight + PIPE_GAP;
+
+        pipes.push({ // Top pipe
             x: canvas.width,
             y: 0,
             width: PIPE_WIDTH,
             height: topPipeHeight,
             passed: false
         });
-        pipes.push({
+        pipes.push({ // Bottom pipe
             x: canvas.width,
-            y: topPipeHeight + PIPE_GAP,
+            y: bottomPipeY,
             width: PIPE_WIDTH,
-            height: canvas.height - topPipeHeight - PIPE_GAP,
-            passed: false // Only top pipe needs scoring check
+            height: canvas.height - bottomPipeY,
+            passed: false
         });
     }
 
-    // Move pipes
+    // Move pipes using deltaTime
     pipes.forEach(pipe => {
-        pipe.x -= PIPE_SPEED;
+        pipe.x -= PIPE_SPEED * deltaTime;
     });
 
-    // Remove off-screen pipes
+    // (The rest of the update function logic remains the same)
     pipes = pipes.filter(pipe => pipe.x + pipe.width > 0);
-
-    // Collision detection
     checkCollisions();
-
-    // Scoring
-    const firstPipe = pipes[0];
-    if (firstPipe && firstPipe.x + firstPipe.width < bird.x && !firstPipe.passed) {
+    const firstPipe = pipes.find(pipe => !pipe.passed);
+    if (firstPipe && firstPipe.x + firstPipe.width < bird.x) {
         score++;
-        firstPipe.passed = true; // Mark as passed
+        // Mark both parts of the pipe as passed
+        const pipeIndex = pipes.indexOf(firstPipe);
+        pipes[pipeIndex].passed = true;
+        if(pipeIndex % 2 === 0) {
+           pipes[pipeIndex + 1].passed = true;
+        } else {
+           pipes[pipeIndex - 1].passed = true;
+        }
     }
 }
+
 
 // Renders everything to the canvas
 function draw() {
@@ -146,10 +176,11 @@ function checkCollisions() {
 function flap() {
     if (!gameStarted) {
         gameStarted = true;
-        gameLoop();
+        lastTime = 0; // Reset lastTime on game start
+        requestAnimationFrame(gameLoop); // Start the new game loop
     }
     if (!gameOver) {
-        bird.velocity = LIFT;
+        bird.velocity = LIFT; // Use the new "per second" LIFT value
     }
 }
 
@@ -165,6 +196,7 @@ function resetGame() {
     pipes = [];
     score = 0;
     frameCount = 0;
+    timeToNextPipe = 0;
     gameOver = false;
     gameStarted = false;
     drawStartScreen();
