@@ -66,7 +66,7 @@ function gameLoop(currentTime) {
     lastTime = currentTime;
 
     update(deltaTime); // Pass deltaTime to the update function
-    draw();
+    draw(deltaTime);
     requestAnimationFrame(gameLoop);
 }
 
@@ -133,7 +133,7 @@ function update(deltaTime) {
 
 
 // Renders everything to the canvas
-function draw() {
+function draw(deltaTime) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Background
@@ -152,6 +152,17 @@ function draw() {
     ctx.fillStyle = 'white';
     ctx.font = '30px "Press Start 2P", cursive';
     ctx.fillText(score, canvas.width / 2 - 15, 50);
+
+    const fps = Math.round(1 / deltaTime);
+
+    // Set text style
+    ctx.fillStyle = 'black';
+    ctx.font = '18px Arial';
+    ctx.textAlign = 'left';
+    
+    // Display the debug info
+    ctx.fillText(`FPS: ${fps}`, 10, 25);
+    ctx.fillText(`dT: ${deltaTime.toFixed(5)}`, 10, 50); // Show deltaTime with 5 decimal places
 }
 
 function checkCollisions() {
