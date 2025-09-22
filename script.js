@@ -18,12 +18,6 @@ const LIFT = -7;
 const PIPE_GAP = 120;
 const PIPE_SPEED = 2;
 
-if (window.matchMedia("(max-width: 650px)").matches) {
-  // If the screen is narrow (like a phone), slow the game down
-  GRAVITY = 0.2;
-  PIPE_SPEED = 1;
-}
-
 let bird = {
     x: 50,
     y: 150,
