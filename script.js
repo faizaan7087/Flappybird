@@ -45,7 +45,11 @@ bottomPipeImg.src = 'images/pipeup.png';
 
 
 // --- Game Functions ---
-
+if (window.matchMedia("(max-width: 650px)").matches) {
+  // If the screen is narrow (like a phone), slow the game down
+  GRAVITY = 0.2;
+  PIPE_SPEED = 1;
+}
 // Main game loop
 function gameLoop() {
     if (gameOver) {
